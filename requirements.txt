@@ -1,0 +1,7 @@
+dateutil
+msgpack
+klein
+twisted
+hiredis
+redis
+tablib
