@@ -1,7 +1,9 @@
-dateutil
+python-dateutil
 msgpack
 klein
 twisted
 hiredis
 redis
 tablib
+numpy
+pyOpenSSL

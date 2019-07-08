@@ -28,7 +28,7 @@ configuration = {
     "SYSLOG_CACHE_DB_NES": 1,
     "COMPRESSION_TYPE": 5,
     "DASHBOARD_WEB_INTERFACE": "0.0.0.0",
-    "DASHBOARD_WEB_PORT": 8000,
+    "DASHBOARD_WEB_PORT": 3000,
     "PRIVATE_KEY": "localhost.pem",
     "SEVERITY_TO_RETURN": "0 1 2 3",
     "DASHBOARD_SHOW_HOURS": 4,
@@ -458,7 +458,7 @@ def enable_cors(request):
 @nserv.route("/", methods=["GET"])
 def root(request):
     index_file = ""
-    index_file_handler = open("/build/index.html", "r")
+    index_file_handler = open("build/index.html", "r")
     for readIndexLine in index_file_handler:
         index_file += readIndexLine
     index_file_handler.close()
@@ -467,12 +467,12 @@ def root(request):
 
 @nserv.route("/static/img/", branch=True)
 def img(request):
-    return File("/build/static/img/")
+    return File("build/static/img/")
 
 
 @nserv.route("/static/", branch=True)
 def static(request):
-    return File("/build/static/")
+    return File("build/static/")
 
 
 @nserv.route("/server_data")

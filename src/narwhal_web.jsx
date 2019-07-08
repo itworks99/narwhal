@@ -1,5 +1,4 @@
 import { ResponsiveWaffle } from '@nivo/waffle';
-// import { ResponsiveLine } from '@nivo/line';
 import { LineChart } from 'react-chartkick';
 import 'chart.js';
 import axios from 'axios';
@@ -23,8 +22,8 @@ import {
 import { chartColors, syslogFacility, syslogSeverity } from './ui_support';
 
 const version = 'ver.0.2';
-const serverData = 'https://localhost:8000/server_data';
-const serverEvents = 'https://localhost:8000/server_events';
+const serverData = 'https://localhost:3000/server_data';
+const serverEvents = 'https://localhost:3000/server_events';
 
 const https = require('https');
 
