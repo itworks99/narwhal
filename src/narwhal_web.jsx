@@ -22,8 +22,8 @@ import {
 import { chartColors, syslogFacility, syslogSeverity } from './ui_support';
 
 const version = 'ver.0.2';
-const serverData = 'https://localhost:3000/server_data';
-const serverEvents = 'https://localhost:3000/server_events';
+const serverDataEntry = '/server_data';
+const serverEventsEntry = '/server_events';
 
 const https = require('https');
 
@@ -76,8 +76,8 @@ function Narwhal() {
       let counter = timerCounter + 1;
       if (counter === 1) {
         setLoading(true);
-        fetchData(serverData);
-        fetchEvents(serverEvents);
+        fetchData(serverDataEntry);
+        fetchEvents(serverEventsEntry);
         if (logDataJSON) {
           setLoading(false);
         }

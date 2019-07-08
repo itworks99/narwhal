@@ -1,9 +1,10 @@
 python-dateutil
 msgpack
-klein
+pyOpenSSL
+service_identity
 twisted
+klein
 hiredis
 redis
 tablib
 numpy
-pyOpenSSL
