@@ -2,7 +2,7 @@ import datetime
 import json
 import os
 import re
-import zlib
+import zstd
 
 import dateutil.parser
 import msgpack
@@ -11,8 +11,8 @@ import redis
 import tablib
 from klein import Klein
 from twisted.internet import endpoints, reactor, task
-from twisted.web.server import Site
 from twisted.web.static import File
+from twisted.web.server import Site
 
 from pri import PRI
 
@@ -26,9 +26,9 @@ configuration = {
     "REDIS_MAIN_DB": 0,
     "SYSLOG_CACHE_PROCESS_INTERVAL": 2,
     "SYSLOG_CACHE_DB_NES": 1,
-    "COMPRESSION_TYPE": 5,
+    "COMPRESSION_TYPE": 3,
     "DASHBOARD_WEB_INTERFACE": "0.0.0.0",
-    "DASHBOARD_WEB_PORT": 3000,
+    "DASHBOARD_WEB_PORT": 8000,
     "PRIVATE_KEY": "localhost.pem",
     "SEVERITY_TO_RETURN": "0 1 2 3",
     "DASHBOARD_SHOW_HOURS": 4,
@@ -76,12 +76,6 @@ def display_console_banner():
     print("   / |/ /__ ______    __/ /  ___ _/ / ")
     print("  /    / _ `/ __/ |/|/ / _ \/ _ `/ /  ")
     print(" /_/|_/\_,_/_/  |__,__/_//_/\_,_/_/    syslog server v." + VERSION)
-    print(DASH_LINE)
-    print(" URL's: "+base_url)
-    print("        " + base_url + "/json")
-    print("        " + base_url + "/json_alerts")
-    print("        " + base_url + "/csv")
-    print("        " + base_url + "/csv_alerts")
     return
 
 
@@ -160,7 +154,7 @@ def syslog_cache_processor(redis_syslog_cache, redis_main_db):
         redis_syslog_cache_pipeline.lpop("raw_message_block")
 
     for compressed_data in redis_syslog_cache_pipeline.execute():
-        decompressed_data = zlib.decompress(bytearray(compressed_data))
+        decompressed_data = zstd.decompress(compressed_data)
         data = msgpack.unpackb(decompressed_data, raw=False)
         for entry in data:
             dt += entry['dt']
@@ -199,8 +193,8 @@ def syslog_cache_processor(redis_syslog_cache, redis_main_db):
 
             data_packed = msgpack.packb(
                 [data_block], use_bin_type=True)
-            data_compressed = zlib.compress(
-                data_packed, configuration["COMPRESSION_TYPE"])
+            data_compressed = zstd.compress(
+                data_packed, configuration['COMPRESSION_TYPE'])
             redis_main_db.rpush(date_key, data_compressed)
 
             date_key = new_date_key
@@ -267,13 +261,14 @@ def respond_to_dashboard_data_request(redis_connection):
 
     severity_keys = available_severity_keys(redis_connection)
     for severity_key in severity_keys:
-        severity_key = severity_key.decode('UTF-8')
-        timeline += redis_connection.lrange(severity_key, 0, -1)
+        # severity_key = severity_key.decode('UTF-8')
+        timeline += redis_connection.lrange(
+            (severity_key.decode('UTF-8')), 0, -1)
 
-    dashboard["total_events"] = len(timeline)
+    dashboard["total_events"] = np.count_nonzero(timeline)
 
     if timeline:
-        timeline.sort()
+        timeline = np.sort(timeline, axis=None)
 
         dashboard["firstDataTimestamp"] = timeline[0].decode('UTF-8')
         dashboard["lastDataTimestamp"] = timeline[-1].decode('UTF-8')
@@ -357,29 +352,28 @@ def respond_to_events_data_request(redis_connection, events_to_return, mode):
     if events_to_return == "alerts":
         severity_to_return = configuration['SEVERITY_TO_RETURN'].split()
     if events_to_return == "all":
-        severity_keys = available_severity_keys(redis_connection)
-        severity_to_return = list(map(prepare_keys, severity_keys))
+        severity_to_return = list(
+            map(prepare_keys, (available_severity_keys(redis_connection))))
 
     severity_to_return.sort()
 
     for severity_key in severity_to_return:
-        severity_key_str = 'sev' + str(severity_key)
-        timeline = np.concatenate((timeline, np.array(list(
-            map(decode_bytes, (redis_connection.lrange(severity_key_str, 0, -1)))))), axis=0)
+        timeline = np.concatenate((timeline, np.array(list(map(
+            decode_bytes, (redis_connection.lrange(('sev' + str(severity_key)), 0, -1)))))), axis=0)
 
-    timeline.sort()
-
-    timestamps = list(map(truncate_timestamp, timeline))
-    timestamps = np.unique(timestamps)
+    timeline = np.sort(timeline, axis=None)
+    timestamps = np.unique(list(map(truncate_timestamp, timeline)))
 
     redis_pipeline = redis_connection.pipeline()
     for timestamp in timestamps:
-        redis_pipeline.lrange(timestamp, 0, -1)
+        redis_pipeline.lrange(timestamp, 0, 0)
 
     for zipped_data in redis_pipeline.execute():
-        if len(zipped_data) > 0:
+
+        if np.count_nonzero(zipped_data) > 0:
             data = (msgpack.unpackb(
-                zlib.decompress(zipped_data[0]), raw=False))[0]
+                zstd.decompress(zipped_data[0]), raw=False))[0]
+
             dt = np.concatenate((dt, np.array(data['dt'])), axis=0)
             endpoint = np.concatenate(
                 (endpoint, np.array(data["endpoint"])), axis=0)
@@ -393,7 +387,7 @@ def respond_to_events_data_request(redis_connection, events_to_return, mode):
                 (time, np.array(list(data["timestamp"]))), axis=0)
             event = np.concatenate((event, np.array(data["event"])), axis=0)
     if events_to_return == "alerts":
-        for index in range((len(severity)-1), -1, -1):
+        for index in range((np.count_nonzero(severity)-1), -1, -1):
             if str(int(severity[index])) not in severity_to_return:
                 dt = np.delete(dt, index)
                 endpoint = np.delete(endpoint, [index])
@@ -406,7 +400,7 @@ def respond_to_events_data_request(redis_connection, events_to_return, mode):
 
     if mode == "json":
         num = []
-        for n in range(len(dt)):
+        for n in range(np.count_nonzero(dt)):
             num.append(str(n))
 
         data_to_return = {
@@ -414,7 +408,7 @@ def respond_to_events_data_request(redis_connection, events_to_return, mode):
             "dt": list(dt),
             "endpoint": list(endpoint),
             "severity": list(severity),
-            "facility": list(facility.astype(int).astype(str)),
+            "facility": list(facility),
             "ip": list(ip),
             "system": list(system),
             "timestamp": list(time),
@@ -455,7 +449,7 @@ def enable_cors(request):
     return request
 
 
-@nserv.route("/", methods=["GET"])
+@nserv.route("/")
 def root(request):
     index_file = ""
     index_file_handler = open("build/index.html", "r")
@@ -465,14 +459,14 @@ def root(request):
     return index_file
 
 
-@nserv.route("/static/img/", branch=True)
-def img(request):
-    return File("build/static/img/")
-
-
 @nserv.route("/static/", branch=True)
 def static(request):
     return File("build/static/")
+
+
+@nserv.route("/static/img/", branch=True)
+def img(request):
+    return File("build/static/img/")
 
 
 @nserv.route("/server_data")

@@ -8,3 +8,4 @@ hiredis
 redis
 tablib
 numpy
+zstd

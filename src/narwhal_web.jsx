@@ -22,8 +22,10 @@ import {
 import { chartColors, syslogFacility, syslogSeverity } from './ui_support';
 
 const version = 'ver.0.2';
-const serverDataEntry = '/server_data';
-const serverEventsEntry = '/server_events';
+const serverDataEntry = 'https://localhost:8000/server_data';
+const serverEventsEntry = 'https://localhost:8000/server_events';
+// const serverDataEntry = '/server_data';
+// const serverEventsEntry = '/server_events';
 
 const https = require('https');
 
@@ -105,7 +107,7 @@ function Narwhal() {
 
   const projectTitle = (
     <Header inverted>
-      <Image src="/nlogo.png" verticalAlign="middle" size="medium" />
+      <Image src="/static/img/nlogo.png" verticalAlign="middle" size="medium" />
       <Header.Content>
         Narwhal
         <Header.Subheader>{version}</Header.Subheader>
@@ -177,7 +179,7 @@ function Narwhal() {
     }
     return (
       <Segment basic padded={false}>
-        <Table compact="very" striped selectable>
+        <Table compact="very" striped selectable size="small">
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell> N </Table.HeaderCell>
@@ -361,7 +363,7 @@ function Narwhal() {
               <LineChart
                 xmin={logDataJSON.firstDataTimestamp}
                 data={lineChartData}
-                download
+                download={{ background: '#fff' }}
                 colors={chartColors}
                 curve
                 legend="bottom"
@@ -369,14 +371,28 @@ function Narwhal() {
                   animation: { duration: 0 },
                   hover: { animationDuration: 0 },
                   responsiveAnimationDuration: 0,
+                  scales: {
+                    yAxes: [
+                      {
+                        display: true,
+                        ticks: {
+                          min: 0,
+                          stepSize: 25,
+                        },
+                      },
+                    ],
+                  },
                   legend: {
                     labels: {
-                      boxWidth: 10,
+                      boxWidth: 12,
                       defaultFontFamily: 'Lato',
                     },
                   },
                   elements: {
                     point: { radius: 1 },
+                    line: {
+                      tension: 0, // disables bezier curves
+                    },
                   },
                 }}
               />
