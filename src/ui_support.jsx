@@ -5,7 +5,7 @@ export const chartColors = [
   '#DA1E45',
   '#F5D03E',
   '#7AA543',
-  '#6C99D7 ',
+  '#6C99D7',
   '#CCD3D9',
 ];
 
@@ -56,22 +56,4 @@ export const refreshOptions = [
   { key: 20, text: '20 seconds', value: 20 },
   { key: 40, text: '40 seconds', value: 40 },
   { key: 60, text: '60 seconds', value: 60 },
-];
-
-export const dashboardDefaultTimePeriodOptions = [
-  { key: 1, text: '1 hour', value: 1 },
-  { key: 4, text: '4 hours', value: 4 },
-  { key: 6, text: '6 hours', value: 6 },
-  { key: 12, text: '12 hours', value: 12 },
-  { key: 24, text: '24 hours', value: 24 },
-  { key: 48, text: '48 hours', value: 48 },
-];
-
-export const dashboardDefaultZoomOptions = [
-  { key: 5, text: '5 minutes', value: 5 },
-  { key: 15, text: '15 minutes', value: 15 },
-  { key: 30, text: '30 minutes', value: 30 },
-  { key: 1, text: '1 hour', value: 60 },
-  { key: 3, text: '3 hours', value: 180 },
-  { key: 6, text: '6 hours', value: 360 },
 ];

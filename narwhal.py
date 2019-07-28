@@ -1,20 +1,24 @@
+
+
+from twisted.web.server import Site
+from twisted.web.static import File
+from twisted.internet import endpoints, reactor, task
+from pri import PRI
+
 import datetime
-import json
 import os
 import re
-import zstd
+import socket
+import time
 
 import dateutil.parser
 import msgpack
 import numpy as np
+import orjson
 import redis
 import tablib
+import zstd
 from klein import Klein
-from twisted.internet import endpoints, reactor, task
-from twisted.web.static import File
-from twisted.web.server import Site
-
-from pri import PRI
 
 VERSION = "0.2"
 DASH_LINE = "-----------------------------------------------------------------"
@@ -37,32 +41,24 @@ configuration = {
     "SEVERITY_PATTERN": "sev*"
 }
 
-# RFC 5424
-SEVERITY_CODE = {
-    0: "emerg",
-    1: "alert",
-    2: "crit",
-    3: "err",
-    4: "warning",
-    5: "notice",
-    6: "info",
-    7: "debug",
-}
+LOG_MESSAGE_START = "Narwhal server started"
+LOG_MESSAGE_STOP = "Narwhal server stopped"
 
-data_record_template = {
-    "n": [],
-    "dt": [],
-    "endpoint": [],
-    "severity": [],
-    "facility": [],
-    "ip": [],
-    "system": [],
-    "timestamp": [],
-    "event": [],
-}
+# RFC 5424
+SEVERITY_CODE = [
+    "emerg",
+    "alert",
+    "crit",
+    "err",
+    "warning",
+    "notice",
+    "info",
+    "debug"
+]
 
 redis_main_db = ""
-date_key = ""
+narwhal_log_facility = []
+chart_severity = 0
 
 
 def display_console_banner():
@@ -75,7 +71,7 @@ def display_console_banner():
     print("    _  __                __        __ ")
     print("   / |/ /__ ______    __/ /  ___ _/ / ")
     print("  /    / _ `/ __/ |/|/ / _ \/ _ `/ /  ")
-    print(" /_/|_/\_,_/_/  |__,__/_//_/\_,_/_/    syslog server v." + VERSION)
+    print(" /_/|_/\_,_/_/  |__,__/_//_/\_,_/_/    server v." + VERSION)
     return
 
 
@@ -104,7 +100,6 @@ def load_configuration():
         load_env_variable("PRIVATE_KEY")
         load_env_variable("SEVERITY_TO_RETURN")
         load_env_variable("DASHBOARD_SHOW_HOURS")
-        load_env_variable("DASHBOARD_ZOOM_HOURS")
         load_env_variable("DASHBOARD_DATA_REFRESH_SECONDS")
         load_env_variable("ENDPOINT_SYSLOG_TRANSMISSION_INTERVAL_SECONDS")
         load_env_variable("SEVERITY_PATTERN")
@@ -135,34 +130,58 @@ def decode_syslog_pri(pos):
     return facility, severity
 
 
+def narwhal_log(message):
+    global narwhal_log_facility
+    global configuration
+    ip = socket.gethostbyname(socket.gethostname())
+    narwhal_log_facility.append(
+        [
+            datetime.datetime.now().replace(microsecond=0).isoformat(),
+            ip,
+            5,
+            16,
+            ip,
+            configuration['SERVER_NAME'],
+            datetime.datetime.utcnow().isoformat(),
+            message
+        ])
+
+
 def syslog_cache_processor(redis_syslog_cache, redis_main_db):
 
-    global data_record_template
-    global date_key
-    data = np.array([])
+    global narwhal_log_facility
+
+    date_field = ""
+    redis_cache_data = np.array([])
     dt = []
     ip = []
     endpoint = []
     raw_message = []
+    redis_data = []
+    data = np.empty([8])
+    data_to_redis = []
 
-    data_block = data_record_template
-
-    cache_entries_count = redis_syslog_cache.llen("raw_message_block")
+    cache_stored_keys = list(map(
+        decode_bytes, (redis_syslog_cache.hkeys("raw_message_block"))))
 
     redis_syslog_cache_pipeline = redis_syslog_cache.pipeline()
-    for count in range(cache_entries_count):
-        redis_syslog_cache_pipeline.lpop("raw_message_block")
+    for key in cache_stored_keys:
+        redis_syslog_cache_pipeline.hget("raw_message_block", key)
 
     for compressed_data in redis_syslog_cache_pipeline.execute():
         decompressed_data = zstd.decompress(compressed_data)
-        data = msgpack.unpackb(decompressed_data, raw=False)
-        for entry in data:
-            dt += entry['dt']
+        redis_cache_data = msgpack.unpackb(decompressed_data, raw=False)
+        for entry in redis_cache_data:
             ip += entry['ip']
-            endpoint += entry['endpoint']
-            raw_message += entry['raw_message']
+            endpoint += entry['ep']
+            raw_message += entry['ms']
 
-    for index in range(len(dt)):
+    for key in cache_stored_keys:
+        redis_syslog_cache_pipeline.hdel("raw_message_block", key)
+
+    redis_syslog_cache_pipeline.execute()
+
+    for index in range(len(raw_message)):
         if raw_message[index].startswith("<"):
             facility, severity = decode_syslog_pri(
                 raw_message[index].split(">", 1)[0].strip("<"))
@@ -175,54 +194,74 @@ def syslog_cache_processor(redis_syslog_cache, redis_main_db):
         right_part_of_the_raw_message = raw_message[index].split(
             ">", 1)[1].replace(timestamp, '')
         try:
-            system, message = right_part_of_the_raw_message.split(": ", 1)
+            system, message = right_part_of_the_raw_message.split(
+                ": ", 1)
         except ValueError:
-            system = right_part_of_the_raw_message
+            system = str(right_part_of_the_raw_message)
             message = ""
 
-        new_date_key = dt[index][:16]
+        new_date_field = timestamp[:16]
+        if date_field == "":
+            date_field = new_date_field
 
-        if date_key == "":
-            date_key = new_date_key
+        if new_date_field != date_field:
+            data = np.reshape(data, (-1, 8))
+            redis_main_db_pipeline = redis_main_db.pipeline()
 
-        if new_date_key != date_key:
+            for severity_key in range(8):
+                for index in range(len(data)):
+                    if (data[index][2] == str(severity_key)):
+                        data_to_redis.append(data[index].tolist())
 
-            for date_index in range(len(data_block["dt"])):
-                severity_key = "sev" + str(data_block["severity"][date_index])
-                redis_main_db.rpush(severity_key, data_block["dt"][date_index])
+                if data_to_redis:
+                    data_compressed = zstd.compress(
+                        msgpack.packb(data_to_redis),
+                        configuration['COMPRESSION_TYPE'])
+                    compressed_records_count = len(data_to_redis)
 
-            data_packed = msgpack.packb(
-                [data_block], use_bin_type=True)
-            data_compressed = zstd.compress(
-                data_packed, configuration['COMPRESSION_TYPE'])
-            redis_main_db.rpush(date_key, data_compressed)
+                    redis_main_db_pipeline.hset(
+                        severity_key, date_field, data_compressed)
+                    redis_main_db_pipeline.hincrby(
+                        severity_key, 'total', compressed_records_count)
+                    keys_to_score = {date_field:  compressed_records_count}
+                    redis_main_db_pipeline.zadd(
+                        (str(severity_key) + "T"), keys_to_score)
+                    data_to_redis = []
 
-            date_key = new_date_key
-            data_block["n"].clear()
-            data_block["dt"].clear()
-            data_block["endpoint"].clear()
-            data_block["severity"].clear()
-            data_block["facility"].clear()
-            data_block["ip"].clear()
-            data_block["system"].clear()
-            data_block["timestamp"].clear()
-            data_block["event"].clear()
+            redis_main_db_pipeline.execute()
+            date_field = new_date_field
+            data = np.empty([8])
 
-        data_block["dt"].append(dt[index])
-        data_block["endpoint"].append(endpoint[index])
-        data_block["severity"].append(severity)
-        data_block["facility"].append(facility)
-        data_block["ip"].append(ip[index])
-        data_block["system"].append(system)
-        data_block["timestamp"].append(timestamp)
-        data_block["event"].append(message)
+        data_row = np.array([timestamp[:16],
+                             endpoint[index],
+                             severity,
+                             facility,
+                             ip[index],
+                             system,
+                             timestamp,
+                             message])
+        data = np.concatenate((data, data_row), axis=0)
+
+    if narwhal_log_facility:
+        for log_row in narwhal_log_facility:
+            data = np.concatenate((data, log_row), axis=0)
+        narwhal_log_facility.clear()
+
     calculate_statistic(redis_main_db)
     return
 
 
 def available_severity_keys(redis_connection):
-    severity_keys = redis_connection.keys(configuration["SEVERITY_PATTERN"])
-    severity_keys.sort()
+
+    severity_keys = []
+    redis_pipeline = redis_connection.pipeline()
+    for index in range(7):
+        redis_pipeline.exists(str(index))
+    sev_key = 0
+    for item in redis_pipeline.execute():
+        if item:
+            severity_keys.append(str(sev_key))
+        sev_key += 1
     return severity_keys
 
 
@@ -230,10 +269,8 @@ def calculate_statistic(redis_connection):
     messages_by_severity = [0, 0, 0, 0, 0, 0, 0, 0]
     severity_keys = available_severity_keys(redis_connection)
     for severity_key in severity_keys:
-        severity_key = severity_key.decode('UTF-8')
-        array_position = int(severity_key.replace('sev', '').strip())
-        messages_by_severity[array_position] = redis_connection.llen(
-            severity_key)
+        messages_by_severity[int(severity_key)] = int((redis_connection.hget(
+            severity_key, 'total')).decode('UTF-8'))
     print(" Messages by severity (1-8):" + str(messages_by_severity) +
           " Total messages: " + str(sum(messages_by_severity)),
           end="\r", flush=True)
@@ -245,73 +282,83 @@ def decode_bytes(item):
 
 
 def truncate_timestamp(item):
-    return item[:16]
+    return item.decode('UTF-8')[:16]
 
 
 def truncate_timestamp_for_chart(item):
     return (item[:15] + "0")
 
 
+def prepare_chart_data(item):
+    global chart_severity
+    return({"x": item[0].decode('UTF-8'), "y": chart_severity, "z": item[1].decode('UTF-8')})
+
+
+def prepare_timeline(item):
+    return(item[0].decode('UTF-8'))
+
+
 def respond_to_dashboard_data_request(redis_connection):
 
-    global configuration
+    global chart_severity
 
     dashboard = {}
+    dashboard['ChartData0'] = []
+    dashboard['ChartData1'] = []
+    dashboard['ChartData2'] = []
+    dashboard['ChartData3'] = []
+    dashboard['ChartData4'] = []
+    dashboard['ChartData5'] = []
+    dashboard['ChartData6'] = []
+    dashboard['ChartData7'] = []
     timeline = []
+    events = []
+    messages_by_severity = [0, 0, 0, 0, 0, 0, 0, 0]
 
     severity_keys = available_severity_keys(redis_connection)
     for severity_key in severity_keys:
-        # severity_key = severity_key.decode('UTF-8')
-        timeline += redis_connection.lrange(
-            (severity_key.decode('UTF-8')), 0, -1)
+        chart_severity = severity_key
+        events = redis_connection.zrange(
+            (str(severity_key)+"T"), 0, -1, withscores=True)
+        events = np.atleast_2d(events)
+        dashboard[('ChartData' + str(severity_key))
+                  ] = list(map(prepare_chart_data, events))
+        timeline += list(map(prepare_timeline, events))
 
-    dashboard["total_events"] = np.count_nonzero(timeline)
+        messages_by_severity[int(severity_key)] = int((redis_connection.hget(
+            severity_key, "total")).decode('UTF-8'))
 
-    if timeline:
-        timeline = np.sort(timeline, axis=None)
+    # timeline = np.reshape(timeline, (-1, 2))
+    timeline.sort()
 
-        dashboard["firstDataTimestamp"] = timeline[0].decode('UTF-8')
-        dashboard["lastDataTimestamp"] = timeline[-1].decode('UTF-8')
+    first_timestamp = timeline[0]
+    last_timestamp = timeline[-1]
 
-        dashboard["timeline"] = []
-        dashboard["timeline_events"] = []
+    dashboard["total_events"] = sum(messages_by_severity)
+    dashboard["messages_per_second"] = 0
+    dashboard["seconds_between_messages"] = 0
 
-        start_date = dateutil.parser.parse(
-            dashboard["firstDataTimestamp"])
-        end_date = dateutil.parser.parse(dashboard["lastDataTimestamp"])
+    # sev_key = []
+    # for severity in range(len(SEVERITY_CODE)):
+    # sev_key += SEVERITY_CODE[severity]
 
-        for severity in range(len(SEVERITY_CODE)):
-            sev_key = "sev" + str(severity)
-            dashboard["chartDatasev" + str(severity)] = {
-                "name": SEVERITY_CODE[severity],
-                "data": []
-            }
+    delta = (dateutil.parser.parse(
+        last_timestamp) -
+        dateutil.parser.parse(first_timestamp))
 
-            dashboard[sev_key] = redis_connection.llen(sev_key)
+    dashboard["messages_per_second"] = round(
+        (dashboard["total_events"] / delta.total_seconds()), 2
+    )
+    dashboard["seconds_between_messages"] = round(
+        (delta.total_seconds() / dashboard["total_events"]), 2
+    )
 
-            sev_key_dt = list(
-                map(decode_bytes, (redis_connection.lrange(sev_key, 0, -1))))
-
-            axisX, axisY = np.unique(
-                list(map(truncate_timestamp_for_chart, sev_key_dt)), return_counts=True)
-
-            dashboard["chartData" +
-                      sev_key]["data"] = dict(zip(axisX, axisY.astype(str)))
-
-        delta = (dateutil.parser.parse(
-            dashboard["lastDataTimestamp"]) -
-            dateutil.parser.parse(dashboard["firstDataTimestamp"]))
-
-        if dashboard["total_events"] > 0:
-            dashboard["messages_per_second"] = round(
-                (dashboard["total_events"] / delta.total_seconds()), 2
-            )
-            dashboard["seconds_between_messages"] = round(
-                (delta.total_seconds() / dashboard["total_events"]), 2
-            )
-        else:
-            dashboard["messages_per_second"] = 0
-            dashboard["seconds_between_messages"] = 0
+    dashboard["logAlertCount"] = messages_by_severity[0] + \
+        messages_by_severity[1] + \
+        messages_by_severity[2] + messages_by_severity[3]
+    dashboard["logWarningsCount"] = messages_by_severity[4]
+    dashboard["logMessageCount"] = messages_by_severity[5] + \
+        messages_by_severity[6] + messages_by_severity[7]
 
     redis_config = redis_connection.info("memory")
 
@@ -323,28 +370,20 @@ def respond_to_dashboard_data_request(redis_connection):
     dashboard["redis_total_system_memory"] = redis_config[
         "total_system_memory"
     ]
-    dashboard["configuration"] = configuration
-
-    return json.dumps(dashboard)
-
-
-def prepare_keys(item):
-    item = item.decode('UTF-8')
-    item = item.replace("sev", '').strip()
-    return item
+    return orjson.dumps(dashboard)
 
 
 def respond_to_events_data_request(redis_connection, events_to_return, mode):
 
     global configuration
-    dt = np.array([])
-    endpoint = np.array([])
-    severity = np.array([])
-    facility = np.array([])
-    ip = np.array([])
-    system = np.array([])
-    time = np.array([])
-    event = np.array([])
+    dt = []
+    endpoint = []
+    severity = []
+    facility = []
+    ip = []
+    system = []
+    time = []
+    event = []
 
     timeline = np.array([])
     timestamps = np.array([])
@@ -352,69 +391,46 @@ def respond_to_events_data_request(redis_connection, events_to_return, mode):
     if events_to_return == "alerts":
         severity_to_return = configuration['SEVERITY_TO_RETURN'].split()
     if events_to_return == "all":
-        severity_to_return = list(
-            map(prepare_keys, (available_severity_keys(redis_connection))))
-
-    severity_to_return.sort()
-
-    for severity_key in severity_to_return:
-        timeline = np.concatenate((timeline, np.array(list(map(
-            decode_bytes, (redis_connection.lrange(('sev' + str(severity_key)), 0, -1)))))), axis=0)
-
-    timeline = np.sort(timeline, axis=None)
-    timestamps = np.unique(list(map(truncate_timestamp, timeline)))
+        severity_to_return = list(available_severity_keys(redis_connection))
 
     redis_pipeline = redis_connection.pipeline()
-    for timestamp in timestamps:
-        redis_pipeline.lrange(timestamp, 0, 0)
 
-    for zipped_data in redis_pipeline.execute():
+    for severity_key in severity_to_return:
+        if events_to_return == "alerts":
+            severity_key = (str(severity_key))
+        redis_pipeline.hgetall(severity_key)
 
-        if np.count_nonzero(zipped_data) > 0:
-            data = (msgpack.unpackb(
-                zstd.decompress(zipped_data[0]), raw=False))[0]
-
-            dt = np.concatenate((dt, np.array(data['dt'])), axis=0)
-            endpoint = np.concatenate(
-                (endpoint, np.array(data["endpoint"])), axis=0)
-            severity = np.concatenate(
-                (severity, np.array(data["severity"])), axis=0)
-            facility = np.concatenate(
-                (facility, np.array(data["facility"])), axis=0)
-            ip = np.concatenate((ip, np.array(data["ip"])), axis=0)
-            system = np.concatenate((system, np.array(data["system"])), axis=0)
-            time = np.concatenate(
-                (time, np.array(list(data["timestamp"]))), axis=0)
-            event = np.concatenate((event, np.array(data["event"])), axis=0)
-    if events_to_return == "alerts":
-        for index in range((np.count_nonzero(severity)-1), -1, -1):
-            if str(int(severity[index])) not in severity_to_return:
-                dt = np.delete(dt, index)
-                endpoint = np.delete(endpoint, [index])
-                severity = np.delete(severity, [index])
-                facility = np.delete(facility, [index])
-                ip = np.delete(ip, [index])
-                system = np.delete(system, [index])
-                time = np.delete(time, [index])
-                event = np.delete(event, [index])
+    for redis_data in redis_pipeline.execute():
+        if redis_data:
+            redis_data_keys = redis_data.keys()
+            for key in redis_data_keys:
+                if key.decode() != "total":
+                    data_block = np.reshape(
+                        (msgpack.unpackb(zstd.decompress(redis_data[key]))),
+                        (-1, 8))
+                    for data in data_block:
+                        dt.append(data[0].decode())
+                        endpoint.append(data[1].decode())
+                        severity.append(data[2].decode())
+                        facility.append(data[3].decode())
+                        ip.append(data[4].decode())
+                        system.append(data[5].decode())
+                        time.append(data[6].decode())
+                        event.append(data[7].decode())
 
     if mode == "json":
-        num = []
-        for n in range(np.count_nonzero(dt)):
-            num.append(str(n))
-
-        data_to_return = {
+        num = [str(n) for n in range(np.count_nonzero(dt))]
+        return (orjson.dumps({
             "n": list(num),
-            "dt": list(dt),
-            "endpoint": list(endpoint),
-            "severity": list(severity),
-            "facility": list(facility),
-            "ip": list(ip),
-            "system": list(system),
-            "timestamp": list(time),
-            "event": list(event)
-        }
-        return (json.dumps(data_to_return))
+            "dt": dt,
+            "endpoint": endpoint,
+            "severity": severity,
+            "facility": facility,
+            "ip": ip,
+            "system": system,
+            "timestamp": time,
+            "event": event
+        }))
 
     if mode == "csv":
         csv_dataset = tablib.Dataset()
@@ -467,6 +483,16 @@ def static(request):
 @nserv.route("/static/img/", branch=True)
 def img(request):
     return File("build/static/img/")
+
+
+@nserv.route("/dashboard", branch=True)
+def return_dashboard_data(request):
+    request = enable_cors(request)
+
+    dashboard = respond_to_dashboard_data_request(redis_main_db)
+    data = respond_to_events_data_request(redis_main_db, "alerts", "json")
+    jsonMerged = {**orjson.loads(dashboard), **orjson.loads(data)}
+    return orjson.dumps(jsonMerged)
 
 
 @nserv.route("/server_data")
@@ -548,7 +574,7 @@ if __name__ == "__main__":
                                           configuration["REDIS_MAIN_DB"])
             connected_to_redis = True
             print(DASH_LINE)
-            print(" Connected to Redis.")
+            print("Connected to Redis.")
 
         except redis.ConnectionError:
 
@@ -559,6 +585,14 @@ if __name__ == "__main__":
             print(DASH_LINE)
 
         if connected_to_redis:
+
+            narwhal_log(LOG_MESSAGE_START)
+
+            print("Processing cache...")
+            start_time = time.time()
+            syslog_cache_processor(redis_syslog_cache, redis_main_db)
+            print("Processed cache on server start in %s seconds.             " %
+                  round(time.time() - start_time))
 
             # endpoint_description = (
             #     "tcp:port=" + str(configuration["DASHBOARD_WEB_PORT"]) +
@@ -581,14 +615,16 @@ if __name__ == "__main__":
 
             main_server_processor_loop.addErrback(main_server_loop_failed)
 
+            # reactor.suggestThreadPoolSize(30)
             reactor.run()
 
     except (IOError, SystemExit):
+
         raise
     except KeyboardInterrupt:
+        narwhal_log(LOG_MESSAGE_STOP)
         print("Shutting down server...")
-        redis_main_db.quit()
-        redis_syslog_cache.quit()
+        syslog_cache_processor(redis_syslog_cache, redis_main_db)
         reactor.callFromThread(reactor.stop)
         # reactor.stop
         print("done.")

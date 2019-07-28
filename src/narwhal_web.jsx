@@ -1,6 +1,13 @@
-import { ResponsiveWaffle } from '@nivo/waffle';
-import { LineChart } from 'react-chartkick';
-import 'chart.js';
+import {
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  ZAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import {
@@ -195,89 +202,9 @@ function Narwhal() {
       </Segment>
     );
   }
+
   if (!loading) {
-    const waffleChartData = [
-      {
-        id: syslogSeverity[0].key,
-        label: syslogSeverity[0].text,
-        value: logDataJSON.sev0,
-      },
-      {
-        id: syslogSeverity[1].key,
-        label: syslogSeverity[1].text,
-        value: logDataJSON.sev1,
-      },
-      {
-        id: syslogSeverity[2].key,
-        label: syslogSeverity[2].text,
-        value: logDataJSON.sev2,
-      },
-      {
-        id: syslogSeverity[3].key,
-        label: syslogSeverity[3].text,
-        value: logDataJSON.sev3,
-      },
-      {
-        id: syslogSeverity[4].key,
-        label: syslogSeverity[4].text,
-        value: logDataJSON.sev4,
-      },
-      {
-        id: syslogSeverity[5].key,
-        label: syslogSeverity[5].text,
-        value: logDataJSON.sev5,
-      },
-      {
-        id: syslogSeverity[6].key,
-        label: syslogSeverity[6].text,
-        value: logDataJSON.sev6,
-      },
-      {
-        id: syslogSeverity[7].key,
-        label: syslogSeverity[7].text,
-        value: logDataJSON.sev7,
-      },
-    ];
-
-    const lineChartData = [
-      {
-        name: logDataJSON.chartDatasev0.name,
-        data: logDataJSON.chartDatasev0.data,
-      },
-      {
-        name: logDataJSON.chartDatasev1.name,
-        data: logDataJSON.chartDatasev1.data,
-      },
-      {
-        name: logDataJSON.chartDatasev2.name,
-        data: logDataJSON.chartDatasev2.data,
-      },
-      {
-        name: logDataJSON.chartDatasev3.name,
-        data: logDataJSON.chartDatasev3.data,
-      },
-      {
-        name: logDataJSON.chartDatasev4.name,
-        data: logDataJSON.chartDatasev4.data,
-      },
-      {
-        name: logDataJSON.chartDatasev5.name,
-        data: logDataJSON.chartDatasev5.data,
-      },
-      {
-        name: logDataJSON.chartDatasev6.name,
-        data: logDataJSON.chartDatasev6.data,
-      },
-      {
-        name: logDataJSON.chartDatasev7.name,
-        data: logDataJSON.chartDatasev7.data,
-      },
-    ];
-
     let renderSelectedMenuSection = '';
-
-    const logAlertCount = logDataJSON.sev0 + logDataJSON.sev1 + logDataJSON.sev2 + logDataJSON.sev3;
-    const logMessageCount = logDataJSON.sev5 + logDataJSON.sev6 + logDataJSON.sev7;
 
     if (activeMenuItem === 'dashboard') {
       renderSelectedMenuSection = (
@@ -286,53 +213,27 @@ function Narwhal() {
             <Grid.Row>
               <Grid padded relaxed columns="equal">
                 <Grid.Column>
-                  <Statistic.Group size="mini">
+                  <Statistic.Group size="small">
                     <Statistic>
                       <Statistic.Value>{logDataJSON.total_events}</Statistic.Value>
                       <Statistic.Label> log entries </Statistic.Label>
                     </Statistic>
                     <Statistic color={alertColor}>
-                      <Statistic.Value>{logAlertCount}</Statistic.Value>
+                      <Statistic.Value>{logDataJSON.logAlertCount}</Statistic.Value>
                       <Statistic.Label> alerts </Statistic.Label>
                     </Statistic>
                     <Statistic color={warningColor}>
-                      <Statistic.Value>{logDataJSON.sev4}</Statistic.Value>
+                      <Statistic.Value>{logDataJSON.logWarningsCount}</Statistic.Value>
                       <Statistic.Label> warnings </Statistic.Label>
                     </Statistic>
                     <Statistic color={noticeColor}>
-                      <Statistic.Value>{logMessageCount}</Statistic.Value>
+                      <Statistic.Value>{logDataJSON.logMessageCount}</Statistic.Value>
                       <Statistic.Label> messages </Statistic.Label>
                     </Statistic>
                   </Statistic.Group>
                 </Grid.Column>
                 <Grid.Column>
-                  <div
-                    style={{
-                      height: 40,
-                    }}
-                  >
-                    <ResponsiveWaffle
-                      data={waffleChartData}
-                      total={logMessageCount}
-                      rows={4}
-                      columns={40}
-                      padding={2}
-                      margin={{
-                        top: 2,
-                        right: 2,
-                        bottom: 2,
-                        left: 2,
-                      }}
-                      colors={chartColors}
-                      colorBy="id"
-                      borderColor="inherit"
-                      fillDirection="top"
-                      animate={false}
-                    />
-                  </div>
-                </Grid.Column>
-                <Grid.Column>
-                  <Statistic.Group size="mini">
+                  <Statistic.Group size="small">
                     <Statistic>
                       <Statistic.Value>{logDataJSON.messages_per_second}</Statistic.Value>
                       <Statistic.Label> msg / sec </Statistic.Label>
@@ -344,7 +245,7 @@ function Narwhal() {
                   </Statistic.Group>
                 </Grid.Column>
                 <Grid.Column>
-                  <Statistic.Group size="mini">
+                  <Statistic.Group size="small">
                     <Statistic>
                       <Statistic.Value>{logDataJSON.redis_used_memory_human}</Statistic.Value>
                       <Statistic.Label> used redis memory </Statistic.Label>
@@ -360,42 +261,63 @@ function Narwhal() {
               </Grid>
             </Grid.Row>
             <Grid.Row>
-              <LineChart
-                xmin={logDataJSON.firstDataTimestamp}
-                data={lineChartData}
-                download={{ background: '#fff' }}
-                colors={chartColors}
-                curve
-                legend="bottom"
-                library={{
-                  animation: { duration: 0 },
-                  hover: { animationDuration: 0 },
-                  responsiveAnimationDuration: 0,
-                  scales: {
-                    yAxes: [
-                      {
-                        display: true,
-                        ticks: {
-                          min: 0,
-                          stepSize: 25,
-                        },
-                      },
-                    ],
-                  },
-                  legend: {
-                    labels: {
-                      boxWidth: 12,
-                      defaultFontFamily: 'Lato',
-                    },
-                  },
-                  elements: {
-                    point: { radius: 1 },
-                    line: {
-                      tension: 0, // disables bezier curves
-                    },
-                  },
+              <ScatterChart
+                height={250}
+                width={1200}
+                margin={{
+                  top: 20,
+                  right: 10,
+                  bottom: 10,
+                  left: 10,
                 }}
-              />
+              >
+                <CartesianGrid />
+                <XAxis type="category" dataKey="x" name="timeline" />
+                <YAxis type="number" dataKey="y" name="severity" />
+                <ZAxis type="number" dataKey="z" name="amount" unit="log records" />
+                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                <Legend />
+                <Scatter
+                  name={syslogSeverity[0].text}
+                  data={logDataJSON.ChartData0}
+                  fill={chartColors[0]}
+                />
+                <Scatter
+                  name={syslogSeverity[1].text}
+                  data={logDataJSON.ChartData1}
+                  fill={chartColors[1]}
+                />
+                <Scatter
+                  name={syslogSeverity[2].text}
+                  data={logDataJSON.ChartData2}
+                  fill={chartColors[2]}
+                />
+                <Scatter
+                  name={syslogSeverity[3].text}
+                  data={logDataJSON.ChartData3}
+                  fill={chartColors[3]}
+                />
+                <Scatter
+                  name={syslogSeverity[4].text}
+                  data={logDataJSON.ChartData4}
+                  fill={chartColors[4]}
+                />
+                <Scatter
+                  name={syslogSeverity[5].text}
+                  data={logDataJSON.ChartData5}
+                  fill={chartColors[5]}
+                />
+                <Scatter
+                  name={syslogSeverity[6].text}
+                  data={logDataJSON.ChartData6}
+                  fill={chartColors[6]}
+                />
+                <Scatter
+                  name={syslogSeverity[7].text}
+                  data={logDataJSON.ChartData7}
+                  fill={chartColors[7]}
+                />
+              </ScatterChart>
             </Grid.Row>
             <Grid.Row>{eventsTable()}</Grid.Row>
           </Grid.Column>
