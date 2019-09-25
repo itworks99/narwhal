@@ -364,7 +364,7 @@ function Narwhal() {
       );
     }
     const sideMenu = (
-      <React.Fragment>
+      <>
         <Menu.Item header>{projectTitle}</Menu.Item>
         <Menu.Item header value="dashboard" onClick={clickOnSideSectionMenuItem}>
           <Icon name="heartbeat" size="large" />
@@ -374,7 +374,7 @@ function Narwhal() {
           <Icon name="book" size="large" />
           Data export
         </Menu.Item>
-      </React.Fragment>
+      </>
     );
     return (
       <Sidebar.Pushable as={Segment}>
@@ -388,11 +388,11 @@ function Narwhal() {
     );
   }
   return (
-    <React.Fragment>
+    <>
       <Dimmer inverted active={loading}>
         <Loader size="massive"> Loading </Loader>
       </Dimmer>
-    </React.Fragment>
+    </>
   );
 }
 
