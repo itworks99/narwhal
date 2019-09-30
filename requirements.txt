@@ -1,5 +1,4 @@
 python-dateutil
-orjson
 msgpack
 pyOpenSSL
 service_identity

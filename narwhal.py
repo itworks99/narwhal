@@ -1,5 +1,3 @@
-
-
 from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.internet import endpoints, reactor, task
@@ -14,7 +12,8 @@ import time
 import dateutil.parser
 import msgpack
 import numpy as np
-import orjson
+# import orjson
+import json
 import redis
 import tablib
 import zstd
@@ -370,7 +369,7 @@ def respond_to_dashboard_data_request(redis_connection):
     dashboard["redis_total_system_memory"] = redis_config[
         "total_system_memory"
     ]
-    return orjson.dumps(dashboard)
+    return json.dumps(dashboard)
 
 
 def respond_to_events_data_request(redis_connection, events_to_return, mode):
@@ -420,7 +419,7 @@ def respond_to_events_data_request(redis_connection, events_to_return, mode):
 
     if mode == "json":
         num = [str(n) for n in range(np.count_nonzero(dt))]
-        return (orjson.dumps({
+        return (json.dumps({
             "n": list(num),
             "dt": dt,
             "endpoint": endpoint,
@@ -491,8 +490,8 @@ def return_dashboard_data(request):
 
     dashboard = respond_to_dashboard_data_request(redis_main_db)
     data = respond_to_events_data_request(redis_main_db, "alerts", "json")
-    jsonMerged = {**orjson.loads(dashboard), **orjson.loads(data)}
-    return orjson.dumps(jsonMerged)
+    jsonMerged = {**json.loads(dashboard), **json.loads(data)}
+    return json.dumps(jsonMerged)
 
 
 @nserv.route("/server_data")
