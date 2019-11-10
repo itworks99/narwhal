@@ -507,8 +507,8 @@ def return_dashboard_data(request):
 @nserv.route("/server_data")
 def server_data_req(request):
     request = enable_cors(request)
-    return respond_to_dashboard_data_request(redis_main_db)
-
+    # return respond_to_dashboard_data_request(redis_main_db)
+    return respond_to_events_data_request(redis_main_db, "all", "json")
 
 @nserv.route("/server_events")
 def server_events_req(request):
