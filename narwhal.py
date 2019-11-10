@@ -593,14 +593,14 @@ if __name__ == "__main__":
             print("Processed cache on server start in %s seconds.             " %
                   round(time.time() - start_time))
 
-            endpoint_description = (
-                "tcp:port=" + str(configuration["DASHBOARD_WEB_PORT"]) +
-                ":interface=" + configuration["DASHBOARD_WEB_INTERFACE"])
-
             # endpoint_description = (
-            #     "ssl:" + str(configuration["DASHBOARD_WEB_PORT"]) +
-            #     ":interface=" + configuration["DASHBOARD_WEB_INTERFACE"] +
-            #     ":privateKey="+configuration["PRIVATE_KEY"])
+            #     "tcp:port=" + str(configuration["DASHBOARD_WEB_PORT"]) +
+            #     ":interface=" + configuration["DASHBOARD_WEB_INTERFACE"])
+
+            endpoint_description = (
+                "ssl:" + str(configuration["DASHBOARD_WEB_PORT"]) +
+                ":interface=" + configuration["DASHBOARD_WEB_INTERFACE"] +
+                ":privateKey="+configuration["PRIVATE_KEY"])
 
             endpoint = endpoints.serverFromString(reactor,
                                                   endpoint_description)
