@@ -474,6 +474,16 @@ def root(request):
     return index_file
 
 
+@nserv.route("/manifest.json")
+def static(request):
+    manifest_file = ""
+    manifest_file_handler = open("build/manifest.json", "r")
+    for readIndexLine in manifest_file_handler:
+        manifest_file += readIndexLine
+    manifest_file_handler.close()
+    return manifest_file
+
+
 @nserv.route("/static/", branch=True)
 def static(request):
     return File("build/static/")
