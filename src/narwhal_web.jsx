@@ -29,10 +29,10 @@ import {
 import { chartColors, syslogFacility, syslogSeverity } from './ui_support';
 
 const version = 'ver.0.2';
-// const serverDataEntry = 'https://localhost:8000/server_data';
-// const serverEventsEntry = 'https://localhost:8000/server_events';
-const serverDataEntry = '/server_data';
-const serverEventsEntry = '/server_events';
+const serverDataEntry = 'https://127.0.0.1:3000/server_data';
+const serverEventsEntry = 'https://127.0.0.1:3000/server_events';
+// const serverDataEntry = '/server_data';
+// const serverEventsEntry = '/server_events';
 
 const https = require('https');
 
