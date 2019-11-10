@@ -29,10 +29,10 @@ import {
 import { chartColors, syslogFacility, syslogSeverity } from './ui_support';
 
 const version = 'ver.0.2';
-const serverDataEntry = 'https://localhost:8000/server_data';
-const serverEventsEntry = 'https://localhost:8000/server_events';
-// const serverDataEntry = '/server_data';
-// const serverEventsEntry = '/server_events';
+// const serverDataEntry = 'https://localhost:8000/server_data';
+// const serverEventsEntry = 'https://localhost:8000/server_events';
+const serverDataEntry = '/server_data';
+const serverEventsEntry = '/server_events';
 
 const https = require('https');
 
@@ -65,6 +65,7 @@ function Narwhal() {
           setLogDataJSON(JSON.parse(response.request.responseText));
         })
         .catch((error) => {
+          // eslint-disable-next-line no-console
           console.log(error);
         });
     }
@@ -77,6 +78,7 @@ function Narwhal() {
           setEventsReady(true);
         })
         .catch((error) => {
+          // eslint-disable-next-line no-console
           console.log(error);
         });
     }

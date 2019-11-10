@@ -4,9 +4,9 @@ A simple syslog server created for cloud and remote deployments where amount of 
 
 ## Features
 
-- Adjustable data compression based on zstd algorithm
+- Adjustable data compression based on [zstd real-time compression algorithm](https://facebook.github.io/zstd/)
 - Adjustable data transmission periods
-- Export of the selected alert categories as JSON/CSV
+- Export of the selected alert categories as JSON endpoints / CSV files
 - Simple web dashboard
 
 ## Screenshot
@@ -54,3 +54,15 @@ You can configure desired settings through environment variables for server Dock
     "DASHBOARD_DATA_REFRESH_SECONDS" - web dashboard data refresh interval.  The default value is 3 seconds.
     
     "ENDPOINT_SYSLOG_TRANSMISSION_INTERVAL_SECONDS" - data transmission interval between endpoint and redis server, 1 second by default.
+
+### Web dashboard
+
+TBA
+
+### JSON endpoints
+
+TBA
+
+### Download data as CSV files
+
+TBA
