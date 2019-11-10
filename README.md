@@ -15,6 +15,18 @@ TBA
 
 ## Installation and configuration
 
+                                +------------------------+          +-------------+
+                                | Narwhal endpoint       | +------> |             |
+      Syslog data  +----------> | UDP:514                |          |             |
+                                |                        | <------+ |             |
+                                |------------------------|          |    Redis    |
+                                                                    |             |
+                                +------------------------+          |             |
+                                |                        | +------> |             |
+                                | Narwhal server         |          |             |
+                                | dashboard at HTTPS:3000| <------+ |             |
+                                +------------------------+          +-------------+
+
 ### Installation
 
 Start with
