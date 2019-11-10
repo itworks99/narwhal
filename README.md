@@ -1,10 +1,18 @@
 # Narwhal
 
-A simple syslog server created for cloud and remote deployments where network utilisation and amount of traffic is precious.
+A simple syslog server created for cloud and remote deployments where amount of traffic and storage are precious.
 
 ## Features
 
-- Compression of the network traffic
+- Adjustable data compression based on zstd algorithm
 - Adjustable data transmission periods
 - Export of the selected alert categories as JSON/CSV
-- Minimalistic web dashboard
+- Simple web dashboard
+
+## Screenshot
+
+TBA
+
+## Installation and configuration
+
+TBA

@@ -31,7 +31,7 @@ configuration = {
     "SYSLOG_CACHE_DB_NES": 1,
     "COMPRESSION_TYPE": 3,
     "DASHBOARD_WEB_INTERFACE": "0.0.0.0",
-    "DASHBOARD_WEB_PORT": 8000,
+    "DASHBOARD_WEB_PORT": 3000,
     "PRIVATE_KEY": "localhost.pem",
     "SEVERITY_TO_RETURN": "0 1 2 3",
     "DASHBOARD_SHOW_HOURS": 4,
