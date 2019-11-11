@@ -447,6 +447,15 @@ def respond_to_events_data_request(redis_connection, events_to_return, mode):
         return csv_dataset.export('csv')
 
 
+def read_and_return_file(path):
+    file = ""
+    file_handler = open(path, "r")
+    for readIndexLine in file_handler:
+        file += readIndexLine
+    file_handler.close()
+    return file
+
+
 nserv = Klein()
 
 
@@ -467,22 +476,12 @@ def enable_cors(request):
 
 @nserv.route("/")
 def home(request):
-    index_file = ""
-    index_file_handler = open("build/index.html", "r")
-    for readIndexLine in index_file_handler:
-        index_file += readIndexLine
-    index_file_handler.close()
-    return index_file
+    return read_and_return_file("build/index.html")
 
 
 @nserv.route("/manifest.json")
 def static(request):
-    manifest_file = ""
-    manifest_file_handler = open("build/manifest.json", "r")
-    for readIndexLine in manifest_file_handler:
-        manifest_file += readIndexLine
-    manifest_file_handler.close()
-    return manifest_file
+    return read_and_return_file("build/manifest.json")
 
 
 @nserv.route("/static/", branch=True)
