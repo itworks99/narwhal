@@ -474,14 +474,14 @@ def root(request):
     return index_file
 
 
-@nserv.route("/manifest.json")
-def static(request):
-    manifest_file = ""
-    manifest_file_handler = open("build/manifest.json", "r")
-    for readIndexLine in manifest_file_handler:
-        manifest_file += readIndexLine
-    manifest_file_handler.close()
-    return manifest_file
+# @nserv.route("/manifest.json", branch=True)
+# def static(request):
+#     manifest_file = ""
+#     manifest_file_handler = open("build/manifest.json", "r")
+#     for readIndexLine in manifest_file_handler:
+#         manifest_file += readIndexLine
+#     manifest_file_handler.close()
+#     return manifest_file
 
 
 @nserv.route("/static/", branch=True)
@@ -509,6 +509,7 @@ def server_data_req(request):
     request = enable_cors(request)
     # return respond_to_dashboard_data_request(redis_main_db)
     return respond_to_events_data_request(redis_main_db, "all", "json")
+
 
 @nserv.route("/server_events")
 def server_events_req(request):
