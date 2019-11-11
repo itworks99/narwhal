@@ -18,6 +18,7 @@ import redis
 import tablib
 import zstd
 from klein import Klein
+from klein import run, route
 
 VERSION = "0.2"
 DASH_LINE = "-----------------------------------------------------------------"
@@ -43,7 +44,7 @@ configuration = {
 LOG_MESSAGE_START = "Narwhal server started"
 LOG_MESSAGE_STOP = "Narwhal server stopped"
 
-# RFC 5424
+# as per RFC 5424: https://tools.ietf.org/html/rfc5424
 SEVERITY_CODE = [
     "emerg",
     "alert",
@@ -465,7 +466,7 @@ def enable_cors(request):
 
 
 @nserv.route("/")
-def root(request):
+def home(request):
     index_file = ""
     index_file_handler = open("build/index.html", "r")
     for readIndexLine in index_file_handler:
@@ -474,14 +475,14 @@ def root(request):
     return index_file
 
 
-# @nserv.route("/manifest.json", branch=True)
-# def static(request):
-#     manifest_file = ""
-#     manifest_file_handler = open("build/manifest.json", "r")
-#     for readIndexLine in manifest_file_handler:
-#         manifest_file += readIndexLine
-#     manifest_file_handler.close()
-#     return manifest_file
+@nserv.route("/manifest.json")
+def static(request):
+    manifest_file = ""
+    manifest_file_handler = open("build/manifest.json", "r")
+    for readIndexLine in manifest_file_handler:
+        manifest_file += readIndexLine
+    manifest_file_handler.close()
+    return manifest_file
 
 
 @nserv.route("/static/", branch=True)
