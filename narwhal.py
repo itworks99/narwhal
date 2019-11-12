@@ -479,19 +479,19 @@ def home(request):
     return read_and_return_file("build/index.html")
 
 
-@nserv.route("/manifest.json")
-def static(request):
-    return read_and_return_file("build/manifest.json")
+# @nserv.route("/manifest.json")
+# def static(request):
+#     return read_and_return_file("build/manifest.json")
 
 
 @nserv.route("/static/", branch=True)
 def static(request):
-    return File("build/static/")
+    return File("../narwhal/build/static")
 
 
 @nserv.route("/static/img/", branch=True)
 def img(request):
-    return File("build/static/img/")
+    return File("..narwhal/build/static/img")
 
 
 @nserv.route("/dashboard", branch=True)
