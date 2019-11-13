@@ -10,7 +10,7 @@ A simple drop-in syslog server with adjustable data compression created for the 
 - Export of the selected alert categories as JSON endpoints / CSV files
 - Simple web dashboard
 
-![alt text](ndiagram.png "Narwhal server diagram")
+![alt text](https://raw.githubusercontent.com/itworks99/narwhal/master/ndiagram.png "Narwhal server diagram")
 
 ## Screenshot
 
