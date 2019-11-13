@@ -31,9 +31,25 @@ TBA
 
 ### Installation
 
-Start with
+1.Start Redis:
+
+start a redis instance
+
+    docker run --name some-redis -d redis
+
+start with persistent storage
+
+    docker run --name some-redis -d redis redis-server --appendonly yes
+
+2.Start Narwhal server:
 
     docker run -d -it -p 3000:8080/tcp -e REMOTE_REDIS_HOST='xxx.xxx.xxx.xxx' itworks99/narwhal:latest
+
+where REMOTE_REDIS_HOST value is an ip address of the Redis server.
+
+3.Start [Narwhal endpoint](https://github.com/itworks99/narwhal_endpoint):
+
+    docker run -d -it -p 514:514/udp -p 6514:6514/tcp -e REMOTE_REDIS_HOST='xxx.xxx.xxx.xxx' itworks99/narwhal_endpoint:latest
 
 where REMOTE_REDIS_HOST value is an ip address of the Redis server.
 
