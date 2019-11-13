@@ -116,7 +116,7 @@ function Narwhal() {
 
   const projectTitle = (
     <Header inverted>
-      <Image src="/static/img/nlogo.png" verticalAlign="middle" size="medium" />
+      <Image src="nlogo.png" verticalAlign="middle" size="medium" />
       <Header.Content>
         Narwhal
         <Header.Subheader>{version}</Header.Subheader>
