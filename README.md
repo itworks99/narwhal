@@ -9,6 +9,10 @@ A simple syslog server created for cloud and remote deployments where amount of 
 - Export of the selected alert categories as JSON endpoints / CSV files
 - Simple web dashboard
 
+Inline-style: 
+![alt text](ndiagram.png "Narwhal server diagram")
+
+
 ## Screenshot
 
 TBA
