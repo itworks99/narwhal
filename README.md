@@ -35,7 +35,7 @@ docker run --name some-redis -d redis redis-server --appendonly yes
 #### 2.Start Narwhal server
 
 ```bash
-docker run -d -it -p 3000:8080/tcp -e REMOTE_REDIS_HOST='xxx.xxx.xxx.xxx' itworks99/narwhal:latest
+docker run -d -it -p 3000:3080/tcp -e REMOTE_REDIS_HOST='xxx.xxx.xxx.xxx' itworks99/narwhal:latest
 ```
 
 where **REMOTE_REDIS_HOST** value is an ip address of the Redis server.
@@ -43,7 +43,7 @@ where **REMOTE_REDIS_HOST** value is an ip address of the Redis server.
 #### 3.Start [Narwhal endpoint](https://github.com/itworks99/narwhal_endpoint)
 
 ```bash
-docker run -d -it -p 514:514/udp -p 6514:6514/tcp -e REMOTE_REDIS_HOST='xxx.xxx.xxx.xxx' itworks99/narwhal_endpoint:latest
+docker run -d -it -p 514:514/udp -e REMOTE_REDIS_HOST='xxx.xxx.xxx.xxx' itworks99/narwhal_endpoint:latest
 ```
 
 where **REMOTE_REDIS_HOST** value is an ip address of the Redis server.
