@@ -17,18 +17,6 @@ TBA
 
 ## Installation and configuration
 
-                                +------------------------+          +-------------+
-                                | Narwhal endpoint       | +------> |             |
-      Syslog data  +----------> | UDP:514                |          |             |
-                                |                        | <------+ |             |
-                                |------------------------|          |    Redis    |
-                                                                    |             |
-                                +------------------------+          |             |
-                                |                        | +------> |             |
-                                | Narwhal server         |          |             |
-                                | dashboard at HTTPS:3000| <------+ |             |
-                                +------------------------+          +-------------+
-
 ### Installation
 
 1.Start Redis:
@@ -85,14 +73,14 @@ You can configure desired settings through environment variables for server Dock
     
     "ENDPOINT_SYSLOG_TRANSMISSION_INTERVAL_SECONDS" - data transmission interval between endpoint and redis server, 1 second by default.
 
-### Web dashboard
+### Access web dashboard
 
-TBA
+The web dashboard is available on port 3000.
 
-### JSON endpoints
+### Access JSON endpoints
 
-TBA
+Navigate to :3000/json_all for all data. Use :3000/json_alerts for alerts only.
 
 ### Download data as CSV files
 
-TBA
+Navigate to :3000/csv_all to download all data. Use :3000/csv_alerts for alerts only.
