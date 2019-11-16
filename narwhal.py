@@ -31,8 +31,9 @@ configuration = {
     "SYSLOG_CACHE_PROCESS_INTERVAL": 2,
     "SYSLOG_CACHE_DB_NES": 1,
     "COMPRESSION_TYPE": 3,
-    "DASHBOARD_WEB_INTERFACE": "0.0.0.0",
+    "NETWORK_INTERFACE": "0.0.0.0",
     "DASHBOARD_WEB_PORT": 3000,
+    "ENABLE_HTTPS": "Y",
     "PRIVATE_KEY": "localhost.pem",
     "SEVERITY_TO_RETURN": "0 1 2 3",
     "DASHBOARD_SHOW_HOURS": 4,
@@ -64,7 +65,7 @@ chart_severity = 0
 def display_console_banner():
 
     base_url = "https://" + \
-        configuration["DASHBOARD_WEB_INTERFACE"] + ":" + \
+        configuration["NETWORK_INTERFACE"] + ":" + \
         str(configuration["DASHBOARD_WEB_PORT"])
 
     print(DASH_LINE)
@@ -95,8 +96,9 @@ def load_configuration():
         load_env_variable("SYSLOG_CACHE_PROCESS_INTERVAL")
         load_env_variable("SYSLOG_CACHE_DB_NES")
         load_env_variable("COMPRESSION_TYPE")
-        load_env_variable("DASHBOARD_WEB_INTERFACE")
+        load_env_variable("NETWORK_INTERFACE")
         load_env_variable("DASHBOARD_WEB_PORT")
+        load_env_variable("ENABLE_HTTPS")
         load_env_variable("PRIVATE_KEY")
         load_env_variable("SEVERITY_TO_RETURN")
         load_env_variable("DASHBOARD_SHOW_HOURS")
@@ -604,14 +606,14 @@ if __name__ == "__main__":
             print("Processed cache on server start in %s seconds.             " %
                   round(time.time() - start_time))
 
-            # endpoint_description = (
-            #     "tcp:port=" + str(configuration["DASHBOARD_WEB_PORT"]) +
-            #     ":interface=" + configuration["DASHBOARD_WEB_INTERFACE"])
-
-            endpoint_description = (
-                "ssl:" + str(configuration["DASHBOARD_WEB_PORT"]) +
-                ":interface=" + configuration["DASHBOARD_WEB_INTERFACE"] +
-                ":privateKey="+configuration["PRIVATE_KEY"])
+            if configuration["ENABLE_HTTPS"] == "Y":
+                endpoint_description = (
+                    "ssl:" + str(configuration["DASHBOARD_WEB_PORT"]) +
+                    ":interface=" + configuration["NETWORK_INTERFACE"] +
+                    ":privateKey="+configuration["PRIVATE_KEY"])
+            else:
+                endpoint_description = ("tcp:port=" + str(configuration["DASHBOARD_WEB_PORT"]) +
+                                        ":interface=" + configuration["NETWORK_INTERFACE"])
 
             endpoint = endpoints.serverFromString(reactor,
                                                   endpoint_description)
