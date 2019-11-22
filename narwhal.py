@@ -25,7 +25,7 @@ DASH_LINE = "-----------------------------------------------------------------"
 
 configuration = {
     "SERVER_NAME": "Narwhal",
-    "REMOTE_REDIS_HOST": "192.168.1.14",
+    "REMOTE_REDIS_HOST": "172.17.0.2",
     "REMOTE_REDIS_PORT": 6379,
     "REDIS_MAIN_DB": 0,
     "SYSLOG_CACHE_PROCESS_INTERVAL": 2,
@@ -478,22 +478,34 @@ def enable_cors(request):
 
 @nserv.route("/")
 def home(request):
-    return read_and_return_file("build/index.html")
+    return File("build/")
 
-
-# @nserv.route("/manifest.json")
-# def static(request):
-#     return read_and_return_file("build/manifest.json")
+# @route('/')
+# def home(request):
+#     return File("/build/")
 
 
 @nserv.route("/static/", branch=True)
 def static(request):
-    return File("../narwhal/build/static")
+    return File("build/static/")
 
 
-@nserv.route("/static/img/", branch=True)
-def img(request):
-    return File("..narwhal/build/static/img")
+@route("/src/")
+def static(request):
+    return File("/src/")
+
+
+# @nserv.route("/manifest.json", branch=True)
+# def static(request):
+#     return File("/manifest.json")
+
+# @nserv.route("/static/img/", branch=True)
+# def img(request):
+#     return File("..narwhal/build/static/img")
+
+# @nserv.route("/public/", branch=True)
+# def static(request):
+#     return File("../narwhal/public")
 
 
 @nserv.route("/dashboard", branch=True)

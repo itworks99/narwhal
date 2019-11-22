@@ -67,9 +67,11 @@ You can configure desired settings through environment variables for server Dock
 
 "COMPRESSION_TYPE" : zstd compression type set by default to 3
 
-"DASHBOARD_WEB_INTERFACE": "0.0.0.0"
+"NETWORK_INTERFACE": "0.0.0.0"
 
 "DASHBOARD_WEB_PORT": 3000
+
+"ENABLE_HTTPS": Enable/disable https mode, the default is "Y". Set to "N" to disable.
 
 "PRIVATE_KEY" : private key file to sign https sessions. The default filename is "localhost.pem"
 

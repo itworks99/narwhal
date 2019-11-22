@@ -26,6 +26,9 @@ import {
   Statistic,
   Table,
 } from 'semantic-ui-react';
+
+import nlogo from './nlogo.png';
+
 import { chartColors, syslogFacility, syslogSeverity } from './ui_support';
 
 const version = 'ver.0.2';
@@ -116,7 +119,7 @@ function Narwhal() {
 
   const projectTitle = (
     <Header inverted>
-      <Image src="nlogo.png" verticalAlign="middle" size="medium" />
+      <Image src={nlogo} verticalAlign="middle" size="medium" />
       <Header.Content>
         Narwhal
         <Header.Subheader>{version}</Header.Subheader>
