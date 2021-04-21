@@ -27,7 +27,7 @@ import {
   Table,
 } from 'semantic-ui-react';
 
-import nlogo from './nlogo.png';
+import narwhalLogo from './nlogo.png';
 
 import { chartColors, syslogFacility, syslogSeverity } from './ui_support';
 
@@ -37,7 +37,7 @@ const version = 'ver.0.2';
 const serverDataEntry = '/server_data';
 const serverEventsEntry = '/server_events';
 
-const https = require('https');
+const https = require('http');
 
 function Narwhal() {
   const [eventsReady, setEventsReady] = useState(false);
@@ -119,7 +119,7 @@ function Narwhal() {
 
   const projectTitle = (
     <Header inverted>
-      <Image src={nlogo} verticalAlign="middle" size="medium" />
+      <Image src={narwhalLogo} verticalAlign="middle" size="medium" />
       <Header.Content>
         Narwhal
         <Header.Subheader>{version}</Header.Subheader>
@@ -331,41 +331,50 @@ function Narwhal() {
     }
     if (activeMenuItem === 'data') {
       renderSelectedMenuSection = (
-        <Grid columns={4} stackable textAlign="center" stretched padded relaxed="very">
-          <Grid.Row>
-            <Header padded>Export events data as</Header>
-          </Grid.Row>
-          <Grid.Row verticalAlign="middle">
+        <>
+          <Header textAlign="center">
+            Download data:
+          </Header>
+          <Grid columns={3}>
             <Grid.Column />
             <Grid.Column>
-              <Header icon>
-                <Icon name="file excel outline" />
-                CSV
-              </Header>
-              <Button>
-                <a href="/csv_alerts">Alerts only</a>
-              </Button>
-              <Divider hidden />
-              <Button>
-                <a href="/csv_all">All events</a>
-              </Button>
-            </Grid.Column>
-            <Grid.Column>
-              <Header icon>
-                <Icon name="file code outline" />
-                JSON
-              </Header>
-              <Button>
-                <a href="/json_alerts">Alerts only</a>
-              </Button>
-              <Divider hidden />
-              <Button>
-                <a href="/json_all">All events</a>
-              </Button>
+              <Segment placeholder>
+                <Grid columns={3} padded="vertically" textAlign="center" verticalAlign="middle">
+                  <Grid.Column>
+                    <Header icon>
+                      <Icon name="file excel outline" />
+                      CSV
+                    </Header>
+                    <Button>
+                      <a href="/csv_alerts">Alerts only</a>
+                    </Button>
+                    <Divider hidden />
+                    <Button>
+                      <a href="/csv_all">All events</a>
+                    </Button>
+                  </Grid.Column>
+                  <Grid.Column>
+                    <Divider vertical>Or</Divider>
+                  </Grid.Column>
+                  <Grid.Column>
+                    <Header icon>
+                      <Icon name="file code outline" />
+                      JSON
+                    </Header>
+                    <Button>
+                      <a href="/json_alerts">Alerts only</a>
+                    </Button>
+                    <Divider hidden />
+                    <Button>
+                      <a href="/json_all">All events</a>
+                    </Button>
+                  </Grid.Column>
+                </Grid>
+              </Segment>
             </Grid.Column>
             <Grid.Column />
-          </Grid.Row>
-        </Grid>
+          </Grid>
+        </>
       );
     }
     const sideMenu = (

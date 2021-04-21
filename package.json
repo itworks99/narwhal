@@ -3,20 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "axios": "^0.19.0",
-    "eslint": "^6.6.0",
-    "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-react-hooks": "^2.3.0",
+    "axios": "^0.21.1",
     "prop-types": "^15.7.2",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "react-google-charts": "^3.0.15",
-    "react-scripts": "^3.2.0",
-    "recharts": "^1.8.5",
+    "react-scripts": "^4.0.3",
+    "recharts": "^2.0.9",
     "semantic-ui-css": "^2.4.1",
-    "semantic-ui-react": "^0.88.1",
-    "typeface-lato": "^0.0.75",
-    "typescript": "^3.7.2"
+    "semantic-ui-react": "^2.0.3",
+    "typeface-lato": "^1.1.13"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -34,13 +30,17 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "eslint-config-airbnb": "^18.0.1",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-babel": "^5.3.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-promise": "^4.1.1",
-    "eslint-plugin-react": "^7.12.4",
-    "eslint-plugin-standard": "^4.0.0"
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "eslint": "^7.24.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-plugin-babel": "^5.3.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-react": "^7.23.2",
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "eslint-plugin-standard": "^5.0.0"
   }
 }

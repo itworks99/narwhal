@@ -18,14 +18,14 @@ import redis
 import tablib
 import zstd
 from klein import Klein
-from klein import run, route
+from klein import route
 
 VERSION = "0.2"
 DASH_LINE = "-----------------------------------------------------------------"
 
 configuration = {
     "SERVER_NAME": "Narwhal",
-    "REMOTE_REDIS_HOST": "172.17.0.2",
+    "REMOTE_REDIS_HOST": "localhost",
     "REMOTE_REDIS_PORT": 6379,
     "REDIS_MAIN_DB": 0,
     "SYSLOG_CACHE_PROCESS_INTERVAL": 2,
@@ -69,10 +69,9 @@ def display_console_banner():
         str(configuration["DASHBOARD_WEB_PORT"])
 
     print(DASH_LINE)
-    print("    _  __                __        __ ")
-    print("   / |/ /__ ______    __/ /  ___ _/ / ")
-    print("  /    / _ `/ __/ |/|/ / _ \/ _ `/ /  ")
-    print(" /_/|_/\_,_/_/  |__,__/_//_/\_,_/_/    server v." + VERSION)
+    print(" Narwhal server v." + VERSION)
+    print("Access dashboard at " + base_url)
+    print(DASH_LINE)
     return
 
 
@@ -597,7 +596,6 @@ if __name__ == "__main__":
             redis_main_db = redis_connect(redis,
                                           configuration["REDIS_MAIN_DB"])
             connected_to_redis = True
-            print(DASH_LINE)
             print("Connected to Redis.")
 
         except redis.ConnectionError:
