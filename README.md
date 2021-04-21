@@ -1,9 +1,10 @@
 # Narwhal
 
-A simple drop-in syslog server with adjustable data compression created for the cloud and remote deployments. Still in development.
+A simple drop-in syslog server with log data compression designed to reduce network traffic. Still in development.
 
 ## Features
 
+- Runs in docker containers to simplify deployment
 - Adjustable data compression based on [zstd real-time compression algorithm](https://facebook.github.io/zstd/)
 - [MessagePack](https://msgpack.org/) data serialisation/packaging
 - Adjustable data transmission periods
@@ -75,7 +76,7 @@ You can configure desired settings through environment variables for server Dock
 
 "PRIVATE_KEY" : private key file to sign https sessions. The default filename is "localhost.pem"
 
-"SEVERITY_TO_RETURN" : messages with severity codes that condsidered critical, the default setting is "0 1 2 3"
+"SEVERITY_TO_RETURN" : messages with severity codes that considered critical, the default setting is "0 1 2 3"
 
 "DASHBOARD_SHOW_HOURS" : last X hours to display on web dashboard. The default value is 4 hours.
 
