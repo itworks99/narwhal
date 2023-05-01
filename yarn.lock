@@ -3745,12 +3745,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^0.21.1":
-  version: 0.21.1
-  resolution: "axios@npm:0.21.1"
+"axios@npm:^0.21.2":
+  version: 0.21.4
+  resolution: "axios@npm:0.21.4"
   dependencies:
-    follow-redirects: ^1.10.0
-  checksum: 864fb7b5d077d236737f10adca53bf451a93f35a15271f56fba8da07265a02d26b7d881b935a6697dc6adb0549ea3e56d2eecb403edaa3bb78f6479901c10f69
+    follow-redirects: ^1.14.0
+  checksum: e6d42b269b599d36eb13be0671c237781f32e6ae72be824297c55a3e1ce63b22ba4f46bad5ab28da7d3bae50a72637d55c792cf803be1cf9de6a8bcd6d0dcc1a
   languageName: node
   linkType: hard
 
@@ -7659,13 +7659,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.10.0":
-  version: 1.13.3
-  resolution: "follow-redirects@npm:1.13.3"
+"follow-redirects@npm:^1.14.0":
+  version: 1.15.2
+  resolution: "follow-redirects@npm:1.15.2"
   peerDependenciesMeta:
     debug:
       optional: true
-  checksum: 9ad74c3b66ad5c32d8c009a2afb4e5c1b9e5dbe1f631419296c21f8e4f9976ed2c52f9a676c4acdd1d7f41a8f17a03dfaa3704993b25b5965eb11bc9dc9a8ef5
+  checksum: be594e5583521c9ff8012bf1b72dad42dc96ef0d4030e05164895f15ae4c73cf62cdd5ed9a64b93b4afac682fa392fe371a0dc0db30ae1ec2a375a784249538a
   languageName: node
   linkType: hard
 
@@ -11261,7 +11261,7 @@ fsevents@^1.2.7:
   version: 0.0.0-use.local
   resolution: "narwhal_web@workspace:."
   dependencies:
-    axios: ^0.21.1
+    axios: ^0.21.2
     babel: ^6.23.0
     babel-cli: ^6.26.0
     eslint: ^7.24.0
